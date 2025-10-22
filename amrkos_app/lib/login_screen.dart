@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'main_dashboard_screen.dart'; // <-- TAMBAHKAN INI
+import 'main_dashboard_screen.dart'; // <-- Pastikan import ini ada
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({Key? key}) : super(key: key);
@@ -20,7 +20,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
     return Scaffold(
       backgroundColor: Colors.white,
-      // Kita tambahkan AppBar agar konsisten dengan halaman Daftar
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.black),
@@ -78,15 +77,31 @@ class _LoginScreenState extends State<LoginScreen> {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
+                  // --- KODE NAVIGASI FINAL ---
                   onPressed: () {
+                    // TODO: Tambahkan logika validasi login Anda di sini
+
+                    // Navigasi "soft" (fade) ke Dashboard dan hapus semua halaman sebelumnya
                     Navigator.pushAndRemoveUntil(
                       context,
-                      MaterialPageRoute(
-                        builder: (context) => const MainDashboardScreen(),
+                      PageRouteBuilder(
+                        pageBuilder: (context, animation, secondaryAnimation) =>
+                            const MainDashboardScreen(),
+                        transitionsBuilder:
+                            (context, animation, secondaryAnimation, child) {
+                              return FadeTransition(
+                                opacity: animation, // Animasi memudar
+                                child: child,
+                              );
+                            },
+                        transitionDuration: const Duration(
+                          milliseconds: 600,
+                        ), // Durasi fade
                       ),
                       (Route<dynamic> route) => false, // Hapus semua route
                     );
                   },
+                  // --- AKHIR KODE NAVIGASI ---
                   style: ElevatedButton.styleFrom(
                     backgroundColor: amrkosBlue, // Warna biru solid
                     padding: const EdgeInsets.symmetric(vertical: 16),
@@ -100,9 +115,6 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ),
               ),
-
-              // TODO: Anda bisa tambahkan link "Lupa Kata Sandi?"
-              // dan "Belum punya akun? Daftar" di sini jika perlu
             ],
           ),
         ),
@@ -110,7 +122,7 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  // Widget helper untuk membuat text field (sama seperti di DaftarScreen)
+  // Widget helper untuk membuat text field
   Widget _buildTextField({
     required String label,
     required String hint,

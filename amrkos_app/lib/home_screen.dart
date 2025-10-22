@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'daftar_screen.dart'; // Import halaman daftar
-import 'login_screen.dart'; // <-- PASTIKAN IMPORT INI ADA
-import 'main_dashboard_screen.dart'; // <-- TAMBAHKAN INI
+import 'login_screen.dart'; // Import halaman login
+import 'main_dashboard_screen.dart'; // <-- Pastikan import ini ada
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -44,15 +44,35 @@ class HomeScreen extends StatelessWidget {
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
+                      // --- KODE NAVIGASI FINAL ---
                       onPressed: () {
+                        // Navigasi "soft" (fade) ke Dashboard dan hapus semua halaman sebelumnya
                         Navigator.pushAndRemoveUntil(
                           context,
-                          MaterialPageRoute(
-                            builder: (context) => const MainDashboardScreen(),
+                          PageRouteBuilder(
+                            pageBuilder:
+                                (context, animation, secondaryAnimation) =>
+                                    const MainDashboardScreen(),
+                            transitionsBuilder:
+                                (
+                                  context,
+                                  animation,
+                                  secondaryAnimation,
+                                  child,
+                                ) {
+                                  return FadeTransition(
+                                    opacity: animation, // Animasi memudar
+                                    child: child,
+                                  );
+                                },
+                            transitionDuration: const Duration(
+                              milliseconds: 600,
+                            ), // Durasi fade
                           ),
                           (Route<dynamic> route) => false, // Hapus semua route
                         );
                       },
+                      // --- AKHIR KODE NAVIGASI ---
                       style: ElevatedButton.styleFrom(
                         backgroundColor: buttonBlue,
                         padding: const EdgeInsets.symmetric(vertical: 16),
@@ -75,7 +95,6 @@ class HomeScreen extends StatelessWidget {
                       // Tombol "Masuk"
                       Expanded(
                         child: OutlinedButton(
-                          // --- PERUBAHAN DI SINI ---
                           onPressed: () {
                             // Navigasi "soft" (fade) ke LoginScreen
                             Navigator.push(
@@ -102,7 +121,6 @@ class HomeScreen extends StatelessWidget {
                               ),
                             );
                           },
-                          // --- PERUBAHAN SELESAI ---
                           style: OutlinedButton.styleFrom(
                             foregroundColor: buttonBlue,
                             side: BorderSide(color: buttonBlue, width: 1.5),

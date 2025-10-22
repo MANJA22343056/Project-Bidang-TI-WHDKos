@@ -1,17 +1,18 @@
 import 'package:flutter/material.dart';
 import 'daftar_screen.dart'; // Import halaman daftar
-import 'login_screen.dart';  // <-- PASTIKAN IMPORT INI ADA
+import 'login_screen.dart'; // <-- PASTIKAN IMPORT INI ADA
+import 'main_dashboard_screen.dart'; // <-- TAMBAHKAN INI
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    final Color buttonBlue = const Color(0xFF0077C2); 
+    final Color buttonBlue = const Color(0xFF0077C2);
 
     return Scaffold(
       backgroundColor: Colors.white,
-      body: SafeArea( 
+      body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(24.0),
           child: Column(
@@ -19,11 +20,8 @@ class HomeScreen extends StatelessWidget {
               const Spacer(flex: 2),
 
               // 1. Ilustrasi Onboarding
-              Image.asset(
-                'assets/images/onboarding_image.png', 
-                height: 250, 
-              ),
-              
+              Image.asset('assets/images/onboarding_image.png', height: 250),
+
               const SizedBox(height: 32),
 
               // 2. Teks Caption
@@ -32,8 +30,8 @@ class HomeScreen extends StatelessWidget {
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 18,
-                  color: Colors.grey[700], 
-                  height: 1.5, 
+                  color: Colors.grey[700],
+                  height: 1.5,
                 ),
               ),
 
@@ -44,13 +42,19 @@ class HomeScreen extends StatelessWidget {
                 children: [
                   // Tombol "Langsung Ke beranda"
                   SizedBox(
-                    width: double.infinity, 
+                    width: double.infinity,
                     child: ElevatedButton(
                       onPressed: () {
-                        // TODO: Tambahkan aksi navigasi ke beranda utama
+                        Navigator.pushAndRemoveUntil(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const MainDashboardScreen(),
+                          ),
+                          (Route<dynamic> route) => false, // Hapus semua route
+                        );
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: buttonBlue, 
+                        backgroundColor: buttonBlue,
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(10),
@@ -62,7 +66,7 @@ class HomeScreen extends StatelessWidget {
                       ),
                     ),
                   ),
-                  
+
                   const SizedBox(height: 16),
 
                   // Baris untuk tombol "Masuk" dan "Daftar"
@@ -77,21 +81,31 @@ class HomeScreen extends StatelessWidget {
                             Navigator.push(
                               context,
                               PageRouteBuilder(
-                                pageBuilder: (context, animation, secondaryAnimation) => const LoginScreen(),
-                                transitionsBuilder: (context, animation, secondaryAnimation, child) {
-                                  return FadeTransition(
-                                    opacity: animation,
-                                    child: child,
-                                  );
-                                },
-                                transitionDuration: const Duration(milliseconds: 600),
+                                pageBuilder:
+                                    (context, animation, secondaryAnimation) =>
+                                        const LoginScreen(),
+                                transitionsBuilder:
+                                    (
+                                      context,
+                                      animation,
+                                      secondaryAnimation,
+                                      child,
+                                    ) {
+                                      return FadeTransition(
+                                        opacity: animation,
+                                        child: child,
+                                      );
+                                    },
+                                transitionDuration: const Duration(
+                                  milliseconds: 600,
+                                ),
                               ),
                             );
                           },
                           // --- PERUBAHAN SELESAI ---
                           style: OutlinedButton.styleFrom(
-                            foregroundColor: buttonBlue, 
-                            side: BorderSide(color: buttonBlue, width: 1.5), 
+                            foregroundColor: buttonBlue,
+                            side: BorderSide(color: buttonBlue, width: 1.5),
                             padding: const EdgeInsets.symmetric(vertical: 16),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(10),
@@ -103,7 +117,7 @@ class HomeScreen extends StatelessWidget {
                           ),
                         ),
                       ),
-                      
+
                       const SizedBox(width: 16),
 
                       // Tombol "Daftar"
@@ -114,14 +128,24 @@ class HomeScreen extends StatelessWidget {
                             Navigator.push(
                               context,
                               PageRouteBuilder(
-                                pageBuilder: (context, animation, secondaryAnimation) => const DaftarScreen(),
-                                transitionsBuilder: (context, animation, secondaryAnimation, child) {
-                                  return FadeTransition(
-                                    opacity: animation,
-                                    child: child,
-                                  );
-                                },
-                                transitionDuration: const Duration(milliseconds: 600),
+                                pageBuilder:
+                                    (context, animation, secondaryAnimation) =>
+                                        const DaftarScreen(),
+                                transitionsBuilder:
+                                    (
+                                      context,
+                                      animation,
+                                      secondaryAnimation,
+                                      child,
+                                    ) {
+                                      return FadeTransition(
+                                        opacity: animation,
+                                        child: child,
+                                      );
+                                    },
+                                transitionDuration: const Duration(
+                                  milliseconds: 600,
+                                ),
                               ),
                             );
                           },

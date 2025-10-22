@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'main_dashboard_screen.dart'; // <-- TAMBAHKAN INI
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({Key? key}) : super(key: key);
@@ -38,14 +39,12 @@ class _LoginScreenState extends State<LoginScreen> {
           child: Column(
             children: [
               const SizedBox(height: 24), // Spasi dari AppBar
-
               // 1. Logo
               Image.asset(
                 'assets/images/Logo.png', // Pastikan nama file logo benar
                 height: 80,
               ),
               const SizedBox(height: 48), // Spasi lebih banyak
-
               // 2. Form Email
               _buildTextField(
                 label: 'Email',
@@ -61,7 +60,9 @@ class _LoginScreenState extends State<LoginScreen> {
                 isObscure: _isPasswordObscured,
                 suffixIcon: IconButton(
                   icon: Icon(
-                    _isPasswordObscured ? Icons.visibility_off : Icons.visibility,
+                    _isPasswordObscured
+                        ? Icons.visibility_off
+                        : Icons.visibility,
                     color: Colors.grey,
                   ),
                   onPressed: () {
@@ -78,7 +79,13 @@ class _LoginScreenState extends State<LoginScreen> {
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: () {
-                    // TODO: Tambahkan logika login
+                    Navigator.pushAndRemoveUntil(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const MainDashboardScreen(),
+                      ),
+                      (Route<dynamic> route) => false, // Hapus semua route
+                    );
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: amrkosBlue, // Warna biru solid
@@ -94,7 +101,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
               ),
 
-              // TODO: Anda bisa tambahkan link "Lupa Kata Sandi?" 
+              // TODO: Anda bisa tambahkan link "Lupa Kata Sandi?"
               // dan "Belum punya akun? Daftar" di sini jika perlu
             ],
           ),
@@ -127,14 +134,20 @@ class _LoginScreenState extends State<LoginScreen> {
             hintText: hint,
             hintStyle: TextStyle(color: Colors.grey[500]),
             suffixIcon: suffixIcon,
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 14,
+            ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
               borderSide: BorderSide(color: borderColor),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
-              borderSide: BorderSide(color: const Color(0xFF00AEEF), width: 2.0),
+              borderSide: BorderSide(
+                color: const Color(0xFF00AEEF),
+                width: 2.0,
+              ),
             ),
           ),
         ),

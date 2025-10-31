@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "180416419625",
+    "project_id": "amrkos-app",
+    "storage_bucket": "amrkos-app.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:180416419625:android:4f1f6aedd83f9b0cb58938",
+        "android_client_info": {
+          "package_name": "com.example.amrkos_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCf8t1NRVofTOAyOBpE8NSSrxxSwjNsOqg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

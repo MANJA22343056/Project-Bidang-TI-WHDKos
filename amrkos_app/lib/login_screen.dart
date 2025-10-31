@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
-import 'main_dashboard_screen.dart'; // <-- Pastikan import ini ada
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'main_dashboard_screen.dart'; // Dashboard untuk user
+import 'admin_dashboard_screen.dart'; // Dashboard untuk admin
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({Key? key}) : super(key: key);
@@ -9,14 +12,108 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  // Variabel state untuk mengontrol visibilitas kata sandi
+  // Controller untuk mengambil teks dari text field
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+
   bool _isPasswordObscured = true;
+  bool _isLoading = false; // State untuk loading indicator
+
+  // Fungsi utama untuk login dan pengecekan role
+  Future<void> _signInAndNavigate() async {
+    // 1. Tampilkan loading
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      // 2. Coba login dengan Firebase Auth
+      UserCredential userCredential =
+          await FirebaseAuth.instance.signInWithEmailAndPassword(
+        email: _emailController.text.trim(),
+        password: _passwordController.text.trim(),
+      );
+
+      String uid = userCredential.user!.uid;
+
+      // 3. Cek "role" pengguna di Firestore
+      DocumentSnapshot userDoc =
+          await FirebaseFirestore.instance.collection('users').doc(uid).get();
+
+      String userRole = "user"; // Default role
+      if (userDoc.exists) {
+        // Coba ambil role, jika tidak ada, tetap "user"
+        userRole = (userDoc.data() as Map<String, dynamic>)['role'] ?? 'user';
+      }
+      
+      // Hentikan loading
+      setState(() { _isLoading = false; });
+
+      // 4. Navigasi berdasarkan role
+      if (userRole == 'admin') {
+        // --- INI ADMIN ---
+        // Navigasi "soft" ke Admin Dashboard
+        Navigator.pushAndRemoveUntil(
+          context,
+          PageRouteBuilder(
+            pageBuilder: (context, animation, secondaryAnimation) =>
+                const AdminDashboardScreen(),
+            transitionsBuilder:
+                (context, animation, secondaryAnimation, child) {
+              return FadeTransition(opacity: animation, child: child);
+            },
+            transitionDuration: const Duration(milliseconds: 600),
+          ),
+          (route) => false,
+        );
+      } else {
+        // --- INI USER BIASA ---
+        // Navigasi "soft" ke User Dashboard
+        Navigator.pushAndRemoveUntil(
+          context,
+          PageRouteBuilder(
+            pageBuilder: (context, animation, secondaryAnimation) =>
+                const MainDashboardScreen(),
+            transitionsBuilder:
+                (context, animation, secondaryAnimation, child) {
+              return FadeTransition(opacity: animation, child: child);
+            },
+            transitionDuration: const Duration(milliseconds: 600),
+          ),
+          (route) => false,
+        );
+      }
+    } on FirebaseAuthException catch (e) {
+      // 5. Handle Error (password salah, user tidak ditemukan, dll)
+      setState(() {
+        _isLoading = false;
+      });
+      String message = 'Terjadi kesalahan.';
+      if (e.code == 'user-not-found' || e.code == 'wrong-password' || e.code == 'invalid-credential') {
+        message = 'Email atau password salah.';
+      } else if (e.code == 'invalid-email') {
+        message = 'Format email tidak valid.';
+      }
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(message),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    // Warna biru dari desain Anda
-    final Color amrkosBlue = const Color(0xFF0077C2); // Biru tombol Login
-    final Color borderColor = Colors.grey[400] ?? Colors.grey;
+    final Color amrkosBlue = const Color(0xFF0077C2);
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -26,34 +123,36 @@ class _LoginScreenState extends State<LoginScreen> {
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: const Text(
-          'Masuk', // Judul halaman
+          'Masuk',
           style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
         ),
         backgroundColor: Colors.white,
-        elevation: 0, // Menghilangkan bayangan
+        elevation: 0,
       ),
       body: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
           child: Column(
             children: [
-              const SizedBox(height: 24), // Spasi dari AppBar
-              // 1. Logo
+              const SizedBox(height: 24),
               Image.asset(
-                'assets/images/Logo.png', // Pastikan nama file logo benar
+                'assets/images/Logo.png',
                 height: 80,
               ),
-              const SizedBox(height: 48), // Spasi lebih banyak
-              // 2. Form Email
+              const SizedBox(height: 48),
+
+              // Form Email
               _buildTextField(
+                controller: _emailController, // Hubungkan controller
                 label: 'Email',
                 hint: 'Alamat Email Anda',
                 keyboardType: TextInputType.emailAddress,
               ),
               const SizedBox(height: 24),
 
-              // 3. Form Kata Sandi
+              // Form Kata Sandi
               _buildTextField(
+                controller: _passwordController, // Hubungkan controller
                 label: 'Kata Sandi',
                 hint: 'Masukkan Kata Sandi',
                 isObscure: _isPasswordObscured,
@@ -73,46 +172,32 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
               const SizedBox(height: 48),
 
-              // 4. Tombol Login
+              // Tombol Login
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  // --- KODE NAVIGASI FINAL ---
-                  onPressed: () {
-                    // TODO: Tambahkan logika validasi login Anda di sini
-
-                    // Navigasi "soft" (fade) ke Dashboard dan hapus semua halaman sebelumnya
-                    Navigator.pushAndRemoveUntil(
-                      context,
-                      PageRouteBuilder(
-                        pageBuilder: (context, animation, secondaryAnimation) =>
-                            const MainDashboardScreen(),
-                        transitionsBuilder:
-                            (context, animation, secondaryAnimation, child) {
-                              return FadeTransition(
-                                opacity: animation, // Animasi memudar
-                                child: child,
-                              );
-                            },
-                        transitionDuration: const Duration(
-                          milliseconds: 600,
-                        ), // Durasi fade
-                      ),
-                      (Route<dynamic> route) => false, // Hapus semua route
-                    );
-                  },
-                  // --- AKHIR KODE NAVIGASI ---
+                  // Panggil fungsi _signInAndNavigate saat ditekan
+                  onPressed: _isLoading ? null : _signInAndNavigate,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: amrkosBlue, // Warna biru solid
+                    backgroundColor: amrkosBlue,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
                     ),
                   ),
-                  child: const Text(
-                    'Login',
-                    style: TextStyle(fontSize: 16, color: Colors.white),
-                  ),
+                  child: _isLoading
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
+                        )
+                      : const Text(
+                          'Login',
+                          style: TextStyle(fontSize: 16, color: Colors.white),
+                        ),
                 ),
               ),
             ],
@@ -124,6 +209,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   // Widget helper untuk membuat text field
   Widget _buildTextField({
+    required TextEditingController controller, // Terima controller
     required String label,
     required String hint,
     bool isObscure = false,
@@ -140,26 +226,22 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
         const SizedBox(height: 8),
         TextFormField(
+          controller: controller, // Set controller
           obscureText: isObscure,
           keyboardType: keyboardType,
           decoration: InputDecoration(
             hintText: hint,
             hintStyle: TextStyle(color: Colors.grey[500]),
             suffixIcon: suffixIcon,
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 14,
-            ),
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
               borderSide: BorderSide(color: borderColor),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
-              borderSide: BorderSide(
-                color: const Color(0xFF00AEEF),
-                width: 2.0,
-              ),
+              borderSide: BorderSide(color: const Color(0xFF00AEEF), width: 2.0),
             ),
           ),
         ),

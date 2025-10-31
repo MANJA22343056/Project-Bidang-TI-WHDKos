@@ -1,7 +1,19 @@
 import 'package:flutter/material.dart';
-import 'splash_screen.dart'; // Impor file splash screen Anda
+import 'package:firebase_core/firebase_core.dart'; // <-- 1. Import Core
+import 'firebase_options.dart'; // <-- 2. Import Options (dari flutterfire)
+import 'splash_screen.dart'; 
 
-void main() {
+// 3. Ubah main menjadi async
+void main() async {
+  // 4. Pastikan Flutter siap
+  WidgetsFlutterBinding.ensureInitialized();
+  
+  // 5. Inisialisasi Firebase
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+  
+  // 6. Jalankan aplikasi
   runApp(const MyApp());
 }
 
@@ -16,7 +28,7 @@ class MyApp extends StatelessWidget {
         primarySwatch: Colors.blue,
       ),
       debugShowCheckedModeBanner: false,
-      home: const SplashScreen(), // Mulai aplikasi dari SplashScreen
+      home: const SplashScreen(),
     );
   }
 }

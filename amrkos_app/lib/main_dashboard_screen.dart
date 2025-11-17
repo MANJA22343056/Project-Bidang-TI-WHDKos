@@ -1,14 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:url_launcher/url_launcher.dart';
 
-// --- BAGIAN DATA MODEL (Nantinya diganti dari API) ---
-// Model sederhana untuk data kos
+// Import Screens yang baru dibuat
+import 'chat_screen.dart';
+import 'profile_screen.dart'; 
+
+// --- BAGIAN DATA MODEL & FIREBASE ---
+
 class KosItem {
   final String imageUrl;
-  final String type; // "Putra", "Putri", "Campur"
+  final String type;
   final String name;
   final double rating;
-  final String location; // Menyimpan lokasi spesifik
+  final String location;
   final String price;
+  final String phone; 
 
   KosItem({
     required this.imageUrl,
@@ -17,102 +25,60 @@ class KosItem {
     required this.rating,
     required this.location,
     required this.price,
+    required this.phone,
   });
+
+  factory KosItem.fromFirestore(DocumentSnapshot doc) {
+    final data = doc.data() as Map<String, dynamic>;
+    
+    // Penanganan Tipe Data Rating
+    double ratingValue = 0.0;
+    if (data['rating'] is int) {
+      ratingValue = (data['rating'] as int).toDouble();
+    } else if (data['rating'] is double) {
+      ratingValue = data['rating'] as double;
+    }
+
+    return KosItem(
+      imageUrl: data['imageUrl'] ?? 'https://via.placeholder.com/300',
+      type: data['type'] ?? 'N/A',
+      name: data['name'] ?? 'Kos Tanpa Nama',
+      rating: ratingValue, 
+      location: data['location'] ?? 'Lokasi Tidak Diketahui',
+      price: data['price'] ?? 'Rp. N/A',
+      phone: data['phone'] ?? '', 
+    );
+  }
 }
 
-// Data dummy KOS DI PADANG
-final List<KosItem> popularKos = [
-  KosItem(
-    // Gambar Kos dekat pantai
-    imageUrl: 'https://images.unsplash.com/photo-1627960114945-812e9b81e4b8?q=80&w=1974&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
-    type: 'Putra',
-    name: 'Kos Sejuk Padang Baru',
-    rating: 4.7,
-    location: 'Padang Barat, Kota Padang',
-    price: '1.400.000',
-  ),
-  KosItem(
-    // Gambar Kos Modern
-    imageUrl: 'https://images.unsplash.com/photo-1594950454747-0ec1ce489c74?q=80&w=1969&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
-    type: 'Putri',
-    name: 'Kos Bundo Kanduang',
-    rating: 4.8,
-    location: 'Belakang Kampus UNP, Padang Utara',
-    price: '1.100.000',
-  ),
-  KosItem(
-    // Gambar Kos Sederhana
-    imageUrl: 'https://images.unsplash.com/photo-1549247767-f673e721a37c?q=80&w=1932&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
-    type: 'Campur',
-    name: 'Kos Elang Sentosa',
-    rating: 4.3,
-    location: 'Siteba, Kuranji, Kota Padang',
-    price: '950.000',
-  ),
-];
+// Fungsi untuk mengambil data dari Firestore
+Future<List<KosItem>> fetchKosData() async {
+  try {
+    QuerySnapshot snapshot = await FirebaseFirestore.instance
+        .collection('kosts_padang') 
+        .get();
 
-// Data dummy KOS DEKAT UNIVERSITAS DI PADANG
-final List<KosItem> universitasKos = [
-  KosItem(
-    // Gambar Kos dekat jalan
-    imageUrl: 'https://images.unsplash.com/photo-1595562726415-4673663b6555?q=80&w=1932&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
-    type: 'Putra',
-    name: 'Kos Andalas Residence',
-    rating: 4.5,
-    location: 'Dekat Kampus Unand, Limau Manis',
-    price: '1.300.000',
-  ),
-  KosItem(
-    // Gambar Kos Minimalis
-    imageUrl: 'https://images.unsplash.com/photo-1570191834167-16782c5f590d?q=80&w=1935&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
-    type: 'Putri',
-    name: 'Kos Syariah Air Tawar',
-    rating: 4.9,
-    location: 'Dekat Kampus UNP, Air Tawar',
-    price: '850.000',
-  ),
-  KosItem(
-    // Gambar Kos besar
-    imageUrl: 'https://images.unsplash.com/photo-1589252631558-7c870a3594b9?q=80&w=1932&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
-    type: 'Campur',
-    name: 'Kos Merdeka Jati',
-    rating: 4.2,
-    location: 'Jati, Dekat Kampus Bung Hatta',
-    price: '1.000.000',
-  ),
-];
+    return snapshot.docs.map((doc) => KosItem.fromFirestore(doc)).toList();
 
-// Data dummy KOS DEKAT STASIUN DI PADANG (Stasiun Padang/Simpang Haru)
-final List<KosItem> stasiunKos = [
-  KosItem(
-    // Gambar Kos dekat stasiun
-    imageUrl: 'https://images.unsplash.com/photo-1574441617255-e7af55440c9d?q=80&w=1932&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
-    type: 'Putra',
-    name: 'Kos Garuda Stasiun',
-    rating: 4.1,
-    location: 'Belakang Stasiun Padang',
-    price: '750.000',
-  ),
-  KosItem(
-    // Gambar Kos berwarna cerah
-    imageUrl: 'https://images.unsplash.com/photo-1588691880486-ed50e93b827e?q=80&w=1932&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
-    type: 'Putri',
-    name: 'Kos Anggrek Simpang Haru',
-    rating: 4.6,
-    location: 'Dekat Stasiun Simpang Haru',
-    price: '850.000',
-  ),
-  KosItem(
-    // Gambar Kos dengan pagar
-    imageUrl: 'https://images.unsplash.com/photo-1627885741009-880629a8a729?q=80&w=1932&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
-    type: 'Putra',
-    name: 'Kos Raya Tabiang',
-    rating: 4.3,
-    location: 'Dekat Stasiun Tabiang, Padang',
-    price: '800.000',
-  ),
-];
-// --- AKHIR BAGIAN DATA MODEL ---
+  } catch (e) {
+    print("Error fetching kos data: $e");
+    return [];
+  }
+}
+
+// Fungsi untuk membuka chat WhatsApp
+void _launchWhatsApp(BuildContext context, String phone) async {
+  String formattedPhone = phone.startsWith('0') ? '62${phone.substring(1)}' : phone;
+  final Uri url = Uri.parse("https://wa.me/$formattedPhone?text=Halo,%20saya%20tertarik%20dengan%20kos%20Anda.");
+  
+  if (await canLaunchUrl(url)) {
+    await launchUrl(url, mode: LaunchMode.externalApplication);
+  } else {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Tidak dapat membuka WhatsApp. Pastikan aplikasi terinstal.')),
+    );
+  }
+}
 
 
 class MainDashboardScreen extends StatefulWidget {
@@ -123,18 +89,31 @@ class MainDashboardScreen extends StatefulWidget {
 }
 
 class _MainDashboardScreenState extends State<MainDashboardScreen> {
-  int _selectedIndex = 0; // Untuk Bottom Navigation Bar
-
+  int _selectedIndex = 0; 
+  
   // Helper untuk warna
   static const Color amrkosBlue = Color(0xFF00AEEF);
   static Color amrkosBlueLight = amrkosBlue.withOpacity(0.1);
+
+  // Navigasi
+  void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+
+    if (index == 1) { // Chat
+      Navigator.push(context, MaterialPageRoute(builder: (context) => const ChatScreen()));
+    } else if (index == 2) { // Profil
+      Navigator.push(context, MaterialPageRoute(builder: (context) => const ProfileScreen()));
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: _buildAppBar(),
-      body: _buildBody(),
+      body: _buildBody(), 
       bottomNavigationBar: _buildBottomNavigationBar(),
     );
   }
@@ -148,7 +127,7 @@ class _MainDashboardScreenState extends State<MainDashboardScreen> {
       leadingWidth: 40,
       leading: Padding(
         padding: const EdgeInsets.only(left: 16.0),
-        child: Image.asset('assets/images/Logo.png'), // Logo Anda
+        child: Image.asset('assets/images/Logo.png'),
       ),
       title: const Text(
         'Mudahnya ngekos',
@@ -161,14 +140,13 @@ class _MainDashboardScreenState extends State<MainDashboardScreen> {
       actions: [
         IconButton(
           icon: const Icon(Icons.notifications_none_outlined, color: Colors.black54),
-          onPressed: () {
-            // TODO: Aksi notifikasi
-          },
+          onPressed: () {},
         ),
         IconButton(
           icon: const Icon(Icons.person_outline, color: Colors.black54),
           onPressed: () {
-            // TODO: Aksi profil
+            // Navigasi ke profil dari sini juga bisa
+            Navigator.push(context, MaterialPageRoute(builder: (context) => const ProfileScreen()));
           },
         ),
         const SizedBox(width: 8),
@@ -176,67 +154,56 @@ class _MainDashboardScreenState extends State<MainDashboardScreen> {
     );
   }
 
-  // --- WIDGET UNTUK BODY KONTEN ---
+  // --- WIDGET UNTUK BODY KONTEN (FutureBuilder) ---
   Widget _buildBody() {
-    // SingleChildScrollView agar seluruh halaman bisa di-scroll
-    return SingleChildScrollView(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildMainSearch(), // Search bar utama
-          _buildSectionTitle('Popular di Padang'),
-          _buildHorizontalList(popularKos), // List horizontal
-          _buildSectionTitle('Kos Dekat Universitas Padang'),
-          _buildSectionSearch('Cari Universitas'),
-          // PENTING: Ganti popularKos.reversed.toList() dengan universitasKos
-          _buildHorizontalList(universitasKos), // List horizontal (dengan data universitasKos)
-          _buildSectionTitle('Kos Dekat Stasiun Padang'),
-          _buildSectionSearch('Cari Stasiun'),
-          _buildVerticalList(stasiunKos), // List vertikal
-        ],
-      ),
+    return FutureBuilder<List<KosItem>>(
+      future: fetchKosData(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator(color: amrkosBlue));
+        }
+        if (snapshot.hasError || !snapshot.hasData || snapshot.data!.isEmpty) {
+          return Center(child: Text('Gagal memuat atau tidak ada data kos. ${snapshot.error ?? ''}'));
+        }
+
+        final allKos = snapshot.data!;
+
+        return SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildMainSearch(), // Search Bar (Ganti hintText)
+              _buildSectionTitle('Kos Air Tawar Barat'), // GANTI JUDUL INI
+              _buildVerticalList(allKos), // Gunakan list vertikal untuk semua data
+              const SizedBox(height: 50),
+            ],
+          ),
+        );
+      },
     );
   }
 
   // --- WIDGET HELPER ---
 
+  // Ganti _buildMainSearch agar tanpa tombol Cari, dan ganti hintText
   Widget _buildMainSearch() {
     return Padding(
       padding: const EdgeInsets.all(16.0),
-      child: Row(
-        children: [
-          Expanded(
-            child: TextField(
-              decoration: InputDecoration(
-                hintText: 'Cari lokasi kos (mis: Padang Utara)',
-                prefixIcon: Icon(Icons.search, color: amrkosBlue),
-                filled: true,
-                fillColor: amrkosBlueLight,
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                  borderSide: BorderSide.none,
-                ),
-              ),
-            ),
+      child: TextField(
+        decoration: InputDecoration(
+          hintText: 'Cari kos', // TEKS DIUBAH
+          prefixIcon: Icon(Icons.search, color: amrkosBlue),
+          filled: true,
+          fillColor: amrkosBlueLight,
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10),
+            borderSide: BorderSide.none,
           ),
-          const SizedBox(width: 10),
-          ElevatedButton(
-            onPressed: () {
-              // TODO: Aksi tombol cari
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.grey[300],
-              foregroundColor: Colors.black54,
-              elevation: 0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-            ),
-            child: const Text('Cari'),
-          ),
-        ],
+        ),
+        onSubmitted: (query) {
+          // TODO: Logika pencarian/filter bisa ditambahkan di sini
+        },
       ),
     );
   }
@@ -250,115 +217,22 @@ class _MainDashboardScreenState extends State<MainDashboardScreen> {
       ),
     );
   }
-
-  Widget _buildSectionSearch(String hintText) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-      child: TextField(
-        decoration: InputDecoration(
-          hintText: hintText,
-          prefixIcon: const Icon(Icons.search, color: Colors.grey),
-          filled: true,
-          fillColor: Colors.grey[200],
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(10),
-            borderSide: BorderSide.none,
-          ),
-        ),
-      ),
-    );
-  }
-
-  // List horizontal untuk "Popular" dan "Universitas"
-  Widget _buildHorizontalList(List<KosItem> items) {
-    return Container(
-      height: 240, // Tinggi tetap untuk list horizontal
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 16.0),
-        itemCount: items.length, 
-        itemBuilder: (context, index) {
-          final kos = items[index]; 
-          return _buildHorizontalCard(kos);
-        },
-      ),
-    );
-  }
-
-  Widget _buildHorizontalCard(KosItem kos) {
-    return Container(
-      width: 160, // Lebar tetap untuk card horizontal
-      margin: const EdgeInsets.only(right: 12.0),
-      child: Card(
-        clipBehavior: Clip.antiAlias, // Untuk memotong gambar agar rounded
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        elevation: 2,
-        shadowColor: Colors.grey[100],
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Ganti Image.network dengan Widget yang mendukung Cached Network Image jika Anda menggunakannya
-            Image.network(
-              kos.imageUrl,
-              height: 120,
-              width: double.infinity,
-              fit: BoxFit.cover,
-            ),
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    kos.type,
-                    style: TextStyle(fontSize: 10, color: amrkosBlue),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    kos.name,
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      Icon(Icons.star, color: Colors.yellow[700], size: 14),
-                      Text(' ${kos.rating}', style: const TextStyle(fontSize: 12)),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Rp. ${kos.price}/bulan',
-                    style: const TextStyle(
-                        fontWeight: FontWeight.bold, fontSize: 13),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // List vertikal untuk "Stasiun"
+  
+  // List vertikal untuk menampilkan semua data kos
   Widget _buildVerticalList(List<KosItem> items) {
-    // Gunakan ListView.builder dengan shrinkWrap dan physics
-    // agar bisa berada di dalam SingleChildScrollView
     return ListView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(), // Non-scrollable
       itemCount: items.length,
       itemBuilder: (context, index) {
         final kos = items[index];
-        return _buildVerticalCard(kos);
+        return _buildVerticalCard(context, kos);
       },
     );
   }
 
-  Widget _buildVerticalCard(KosItem kos) {
+  // Card Vertikal dengan Tombol Chat
+  Widget _buildVerticalCard(BuildContext context, KosItem kos) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
       child: Card(
@@ -368,11 +242,23 @@ class _MainDashboardScreenState extends State<MainDashboardScreen> {
         shadowColor: Colors.grey[100],
         child: Column(
           children: [
-            Image.network(
-              kos.imageUrl,
+            // Gambar dengan CachedNetworkImage
+            CachedNetworkImage(
+              imageUrl: kos.imageUrl, 
               height: 150,
               width: double.infinity,
               fit: BoxFit.cover,
+              placeholder: (context, url) => Container(
+                height: 150,
+                color: Colors.grey[200],
+                child: const Center(child: Icon(Icons.image, size: 50, color: Colors.grey)),
+              ),
+              // errorWidget ini akan muncul jika gambar gagal dimuat
+              errorWidget: (context, url, error) => Container(
+                height: 150,
+                color: Colors.red[50],
+                child: const Center(child: Icon(Icons.broken_image, color: Colors.red)),
+              ),
             ),
             Padding(
               padding: const EdgeInsets.all(12.0),
@@ -398,15 +284,13 @@ class _MainDashboardScreenState extends State<MainDashboardScreen> {
                   const SizedBox(height: 8),
                   Text(
                     kos.name,
-                    style: const TextStyle(
-                        fontWeight: FontWeight.bold, fontSize: 18),
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
                   ),
                   const SizedBox(height: 8),
                   Row(
                     children: [
                       Icon(Icons.location_on_outlined, color: Colors.grey[600], size: 16),
                       const SizedBox(width: 4),
-                      // Expanded agar teks lokasi tidak overflow
                       Expanded(
                         child: Text(
                           kos.location,
@@ -425,6 +309,27 @@ class _MainDashboardScreenState extends State<MainDashboardScreen> {
                         fontSize: 16,
                         color: amrkosBlue),
                   ),
+                  const SizedBox(height: 12),
+                  // Tombol Chat WhatsApp
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        _launchWhatsApp(context, kos.phone); 
+                      },
+                      // Ikon diubah menjadi chat_bubble (standar Flutter)
+                      icon: const Icon(Icons.chat_bubble, color: Colors.white), 
+                      label: const Text(
+                        'Chat Pemilik Kos',
+                        style: TextStyle(color: Colors.white, fontSize: 16),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF25D366), 
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -434,17 +339,12 @@ class _MainDashboardScreenState extends State<MainDashboardScreen> {
     );
   }
 
-  // --- WIDGET UNTUK BOTTOM NAVIGATION BAR ---
+  // --- WIDGET UNTUK BOTTOM NAVIGATION BAR (3 Tombol) ---
   Widget _buildBottomNavigationBar() {
     return BottomNavigationBar(
       currentIndex: _selectedIndex,
-      onTap: (index) {
-        setState(() {
-          _selectedIndex = index;
-        });
-        // TODO: Tambahkan logika navigasi untuk tiap tab
-      },
-      type: BottomNavigationBarType.fixed, // Agar 4 item terlihat semua
+      onTap: _onItemTapped,
+      type: BottomNavigationBarType.fixed,
       selectedItemColor: amrkosBlue,
       unselectedItemColor: Colors.grey[600],
       items: const [
@@ -452,11 +352,6 @@ class _MainDashboardScreenState extends State<MainDashboardScreen> {
           icon: Icon(Icons.home_outlined),
           activeIcon: Icon(Icons.home),
           label: 'Beranda',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.bookmark_border),
-          activeIcon: Icon(Icons.bookmark),
-          label: 'Koleksiku',
         ),
         BottomNavigationBarItem(
           icon: Icon(Icons.chat_bubble_outline),

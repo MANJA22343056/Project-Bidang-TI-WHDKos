@@ -7,7 +7,7 @@ class KosItem {
   final String type; // "Putra", "Putri", "Campur"
   final String name;
   final double rating;
-  final String location;
+  final String location; // Menyimpan lokasi spesifik
   final String price;
 
   KosItem({
@@ -20,57 +20,95 @@ class KosItem {
   });
 }
 
-// Data dummy
+// Data dummy KOS DI PADANG
 final List<KosItem> popularKos = [
   KosItem(
-    imageUrl: 'https://picsum.photos/seed/kos1/200/300',
+    // Gambar Kos dekat pantai
+    imageUrl: 'https://images.unsplash.com/photo-1627960114945-812e9b81e4b8?q=80&w=1974&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
     type: 'Putra',
-    name: 'Kos Cempaka Putih',
-    rating: 4.5,
-    location: 'Jl. Melati Putih No. 12',
-    price: '1.200.000',
+    name: 'Kos Sejuk Padang Baru',
+    rating: 4.7,
+    location: 'Padang Barat, Kota Padang',
+    price: '1.400.000',
   ),
   KosItem(
-    imageUrl: 'https://picsum.photos/seed/kos2/200/300',
+    // Gambar Kos Modern
+    imageUrl: 'https://images.unsplash.com/photo-1594950454747-0ec1ce489c74?q=80&w=1969&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
     type: 'Putri',
-    name: 'Kos Duri Sejati',
+    name: 'Kos Bundo Kanduang',
     rating: 4.8,
-    location: 'Jl. Merdeka No. 1',
-    price: '1.500.000',
+    location: 'Belakang Kampus UNP, Padang Utara',
+    price: '1.100.000',
   ),
   KosItem(
-    imageUrl: 'https://picsum.photos/seed/kos3/200/300',
+    // Gambar Kos Sederhana
+    imageUrl: 'https://images.unsplash.com/photo-1549247767-f673e721a37c?q=80&w=1932&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
     type: 'Campur',
-    name: 'Kos Griya Asri',
-    rating: 4.2,
-    location: 'Jl. Soekarno Hatta',
-    price: '900.000',
+    name: 'Kos Elang Sentosa',
+    rating: 4.3,
+    location: 'Siteba, Kuranji, Kota Padang',
+    price: '950.000',
   ),
 ];
 
-final List<KosItem> stasiunKos = [
+// Data dummy KOS DEKAT UNIVERSITAS DI PADANG
+final List<KosItem> universitasKos = [
   KosItem(
-    imageUrl: 'https://picsum.photos/seed/kos4/300/200',
+    // Gambar Kos dekat jalan
+    imageUrl: 'https://images.unsplash.com/photo-1595562726415-4673663b6555?q=80&w=1932&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
     type: 'Putra',
-    name: 'Kos Kenanga Pasar IV',
-    rating: 4.2,
-    location: 'Jl. Bunga Wijaya Kusuma No. 12',
-    price: '750.000',
+    name: 'Kos Andalas Residence',
+    rating: 4.5,
+    location: 'Dekat Kampus Unand, Limau Manis',
+    price: '1.300.000',
   ),
   KosItem(
-    imageUrl: 'https://picsum.photos/seed/kos5/300/200',
+    // Gambar Kos Minimalis
+    imageUrl: 'https://images.unsplash.com/photo-1570191834167-16782c5f590d?q=80&w=1935&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
     type: 'Putri',
-    name: 'Kos Cendana Central',
+    name: 'Kos Syariah Air Tawar',
     rating: 4.9,
-    location: 'Jl. Balaidesa Bendaneka No. 20',
+    location: 'Dekat Kampus UNP, Air Tawar',
     price: '850.000',
   ),
   KosItem(
-    imageUrl: 'https://picsum.photos/seed/kos6/300/200',
+    // Gambar Kos besar
+    imageUrl: 'https://images.unsplash.com/photo-1589252631558-7c870a3594b9?q=80&w=1932&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+    type: 'Campur',
+    name: 'Kos Merdeka Jati',
+    rating: 4.2,
+    location: 'Jati, Dekat Kampus Bung Hatta',
+    price: '1.000.000',
+  ),
+];
+
+// Data dummy KOS DEKAT STASIUN DI PADANG (Stasiun Padang/Simpang Haru)
+final List<KosItem> stasiunKos = [
+  KosItem(
+    // Gambar Kos dekat stasiun
+    imageUrl: 'https://images.unsplash.com/photo-1574441617255-e7af55440c9d?q=80&w=1932&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
     type: 'Putra',
-    name: 'Kos Cemara',
+    name: 'Kos Garuda Stasiun',
+    rating: 4.1,
+    location: 'Belakang Stasiun Padang',
+    price: '750.000',
+  ),
+  KosItem(
+    // Gambar Kos berwarna cerah
+    imageUrl: 'https://images.unsplash.com/photo-1588691880486-ed50e93b827e?q=80&w=1932&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+    type: 'Putri',
+    name: 'Kos Anggrek Simpang Haru',
+    rating: 4.6,
+    location: 'Dekat Stasiun Simpang Haru',
+    price: '850.000',
+  ),
+  KosItem(
+    // Gambar Kos dengan pagar
+    imageUrl: 'https://images.unsplash.com/photo-1627885741009-880629a8a729?q=80&w=1932&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+    type: 'Putra',
+    name: 'Kos Raya Tabiang',
     rating: 4.3,
-    location: 'Jl. Sembada Ujung No. 96',
+    location: 'Dekat Stasiun Tabiang, Padang',
     price: '800.000',
   ),
 ];
@@ -146,12 +184,13 @@ class _MainDashboardScreenState extends State<MainDashboardScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _buildMainSearch(), // Search bar utama
-          _buildSectionTitle('Popular'),
+          _buildSectionTitle('Popular di Padang'),
           _buildHorizontalList(popularKos), // List horizontal
-          _buildSectionTitle('Kos Dekat Universitas'),
+          _buildSectionTitle('Kos Dekat Universitas Padang'),
           _buildSectionSearch('Cari Universitas'),
-          _buildHorizontalList(popularKos.reversed.toList()), // List horizontal (pakai data dummy terbalik)
-          _buildSectionTitle('Kos Dekat Stasiun'),
+          // PENTING: Ganti popularKos.reversed.toList() dengan universitasKos
+          _buildHorizontalList(universitasKos), // List horizontal (dengan data universitasKos)
+          _buildSectionTitle('Kos Dekat Stasiun Padang'),
           _buildSectionSearch('Cari Stasiun'),
           _buildVerticalList(stasiunKos), // List vertikal
         ],
@@ -169,7 +208,7 @@ class _MainDashboardScreenState extends State<MainDashboardScreen> {
           Expanded(
             child: TextField(
               decoration: InputDecoration(
-                hintText: 'Cari lokasi kos',
+                hintText: 'Cari lokasi kos (mis: Padang Utara)',
                 prefixIcon: Icon(Icons.search, color: amrkosBlue),
                 filled: true,
                 fillColor: amrkosBlueLight,
@@ -238,9 +277,9 @@ class _MainDashboardScreenState extends State<MainDashboardScreen> {
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 16.0),
-        itemCount: items.length, // TODO: Ganti dengan items.length
+        itemCount: items.length, 
         itemBuilder: (context, index) {
-          final kos = items[index]; // Ambil data dari list
+          final kos = items[index]; 
           return _buildHorizontalCard(kos);
         },
       ),
@@ -259,6 +298,7 @@ class _MainDashboardScreenState extends State<MainDashboardScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Ganti Image.network dengan Widget yang mendukung Cached Network Image jika Anda menggunakannya
             Image.network(
               kos.imageUrl,
               height: 120,

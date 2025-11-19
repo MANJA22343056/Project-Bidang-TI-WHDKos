@@ -2,16 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:firebase_auth/firebase_auth.dart'; // <<< Diperlukan untuk Save
 
-// Import Screens yang baru dibuat
+// Import Screens
 import 'chat_screen.dart';
 import 'profile_screen.dart'; 
+import 'koleksiku_screen.dart'; // <<< Import KoleksikuScreen
 
-// --- BAGIAN DATA MODEL & FIREBASE ---
+// --- BAGIAN DATA MODEL & FIREBASE FUNCTIONS (OUTSIDE CLASS) ---
 
 class KosItem {
+  final String id; // <<< Document ID ditambahkan
   final String imageUrl;
-  final String type;
+  final String type; 
   final String name;
   final double rating;
   final String location;
@@ -19,6 +22,7 @@ class KosItem {
   final String phone; 
 
   KosItem({
+    required this.id, // <<< Wajib
     required this.imageUrl,
     required this.type,
     required this.name,
@@ -31,7 +35,6 @@ class KosItem {
   factory KosItem.fromFirestore(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
     
-    // Penanganan Tipe Data Rating
     double ratingValue = 0.0;
     if (data['rating'] is int) {
       ratingValue = (data['rating'] as int).toDouble();
@@ -40,6 +43,7 @@ class KosItem {
     }
 
     return KosItem(
+      id: doc.id, // Ambil Document ID
       imageUrl: data['imageUrl'] ?? 'https://via.placeholder.com/300',
       type: data['type'] ?? 'N/A',
       name: data['name'] ?? 'Kos Tanpa Nama',
@@ -80,6 +84,8 @@ void _launchWhatsApp(BuildContext context, String phone) async {
   }
 }
 
+// --- END FIREBASE FUNCTIONS ---
+
 
 class MainDashboardScreen extends StatefulWidget {
   const MainDashboardScreen({Key? key}) : super(key: key);
@@ -91,19 +97,81 @@ class MainDashboardScreen extends StatefulWidget {
 class _MainDashboardScreenState extends State<MainDashboardScreen> {
   int _selectedIndex = 0; 
   
-  // Helper untuk warna
   static const Color amrkosBlue = Color(0xFF00AEEF);
   static Color amrkosBlueLight = amrkosBlue.withOpacity(0.1);
 
-  // Navigasi
+  // --- LOGIKA SAVE/UNSAVE ---
+  
+  // Cek apakah Kos sudah tersimpan
+  Future<bool> _isKosSaved(String kosId) async {
+    final userId = FirebaseAuth.instance.currentUser?.uid;
+    if (userId == null) return false;
+    
+    final doc = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(userId)
+        .collection('saved_kosts')
+        .doc(kosId)
+        .get();
+        
+    return doc.exists;
+  }
+  
+  // Toggle status simpan (Save/Unsave)
+  Future<void> _toggleSaveKos(String kosId) async {
+    final userId = FirebaseAuth.instance.currentUser?.uid;
+    if (userId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Anda harus login untuk menyimpan kos.')),
+      );
+      return;
+    }
+    
+    final docRef = FirebaseFirestore.instance
+        .collection('users')
+        .doc(userId)
+        .collection('saved_kosts')
+        .doc(kosId);
+    
+    try {
+      final doc = await docRef.get();
+      
+      if (doc.exists) {
+        // Hapus (Unsave)
+        await docRef.delete();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Kos dihapus dari Koleksi.')),
+        );
+      } else {
+        // Simpan (Save)
+        await docRef.set({'savedAt': FieldValue.serverTimestamp()});
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Kos berhasil disimpan ke Koleksi!')),
+        );
+      }
+      // Rebuild untuk memperbarui ikon Bookmark
+      setState(() {}); 
+      
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Gagal menyimpan: $e')),
+      );
+    }
+  }
+
+
+  // Navigasi (Diperbarui untuk 4 tombol)
   void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
     });
 
-    if (index == 1) { // Chat
+    // Index: 0=Beranda, 1=Koleksiku, 2=Chat, 3=Profil
+    if (index == 1) { // Koleksiku
+      Navigator.push(context, MaterialPageRoute(builder: (context) => const KoleksikuScreen()));
+    } else if (index == 2) { // Chat
       Navigator.push(context, MaterialPageRoute(builder: (context) => const ChatScreen()));
-    } else if (index == 2) { // Profil
+    } else if (index == 3) { // Profil
       Navigator.push(context, MaterialPageRoute(builder: (context) => const ProfileScreen()));
     }
   }
@@ -145,7 +213,6 @@ class _MainDashboardScreenState extends State<MainDashboardScreen> {
         IconButton(
           icon: const Icon(Icons.person_outline, color: Colors.black54),
           onPressed: () {
-            // Navigasi ke profil dari sini juga bisa
             Navigator.push(context, MaterialPageRoute(builder: (context) => const ProfileScreen()));
           },
         ),
@@ -172,9 +239,9 @@ class _MainDashboardScreenState extends State<MainDashboardScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildMainSearch(), // Search Bar (Ganti hintText)
-              _buildSectionTitle('Kos Air Tawar Barat'), // GANTI JUDUL INI
-              _buildVerticalList(allKos), // Gunakan list vertikal untuk semua data
+              _buildMainSearch(), 
+              _buildSectionTitle('Kos Air Tawar Barat'), 
+              _buildVerticalList(allKos), 
               const SizedBox(height: 50),
             ],
           ),
@@ -184,14 +251,12 @@ class _MainDashboardScreenState extends State<MainDashboardScreen> {
   }
 
   // --- WIDGET HELPER ---
-
-  // Ganti _buildMainSearch agar tanpa tombol Cari, dan ganti hintText
   Widget _buildMainSearch() {
     return Padding(
       padding: const EdgeInsets.all(16.0),
       child: TextField(
         decoration: InputDecoration(
-          hintText: 'Cari kos', // TEKS DIUBAH
+          hintText: 'Cari kos', 
           prefixIcon: Icon(Icons.search, color: amrkosBlue),
           filled: true,
           fillColor: amrkosBlueLight,
@@ -218,11 +283,10 @@ class _MainDashboardScreenState extends State<MainDashboardScreen> {
     );
   }
   
-  // List vertikal untuk menampilkan semua data kos
   Widget _buildVerticalList(List<KosItem> items) {
     return ListView.builder(
       shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(), // Non-scrollable
+      physics: const NeverScrollableScrollPhysics(), 
       itemCount: items.length,
       itemBuilder: (context, index) {
         final kos = items[index];
@@ -231,7 +295,7 @@ class _MainDashboardScreenState extends State<MainDashboardScreen> {
     );
   }
 
-  // Card Vertikal dengan Tombol Chat
+  // Card Vertikal (Diperbarui dengan Tombol Bookmark)
   Widget _buildVerticalCard(BuildContext context, KosItem kos) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
@@ -242,24 +306,53 @@ class _MainDashboardScreenState extends State<MainDashboardScreen> {
         shadowColor: Colors.grey[100],
         child: Column(
           children: [
-            // Gambar dengan CachedNetworkImage
-            CachedNetworkImage(
-              imageUrl: kos.imageUrl, 
-              height: 150,
-              width: double.infinity,
-              fit: BoxFit.cover,
-              placeholder: (context, url) => Container(
-                height: 150,
-                color: Colors.grey[200],
-                child: const Center(child: Icon(Icons.image, size: 50, color: Colors.grey)),
-              ),
-              // errorWidget ini akan muncul jika gambar gagal dimuat
-              errorWidget: (context, url, error) => Container(
-                height: 150,
-                color: Colors.red[50],
-                child: const Center(child: Icon(Icons.broken_image, color: Colors.red)),
-              ),
+            Stack( // Menggunakan Stack untuk tombol bookmark
+              children: [
+                // Gambar
+                CachedNetworkImage(
+                  imageUrl: kos.imageUrl, 
+                  height: 150,
+                  width: double.infinity,
+                  fit: BoxFit.cover,
+                  placeholder: (context, url) => Container(
+                    height: 150,
+                    color: Colors.grey[200],
+                    child: Center(child: Icon(Icons.image, size: 50, color: Colors.grey.shade500)),
+                  ),
+                  errorWidget: (context, url, error) => Container(
+                    height: 150,
+                    color: Colors.red[50],
+                    child: const Center(child: Icon(Icons.broken_image, color: Colors.red)),
+                  ),
+                ),
+                
+                // Tombol Save/Bookmark
+                Positioned(
+                  top: 8,
+                  right: 8,
+                  child: FutureBuilder<bool>(
+                    future: _isKosSaved(kos.id),
+                    builder: (context, snapshot) {
+                      final isSaved = snapshot.data ?? false; // Default: belum tersimpan
+                      return IconButton(
+                        icon: Icon(
+                          isSaved ? Icons.bookmark : Icons.bookmark_border,
+                          color: isSaved ? amrkosBlue : Colors.white,
+                          size: 30,
+                        ),
+                        onPressed: () => _toggleSaveKos(kos.id),
+                        style: IconButton.styleFrom(
+                          backgroundColor: Colors.black.withOpacity(0.4),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
             ),
+            
+            // Detail Kos (Tidak Berubah)
             Padding(
               padding: const EdgeInsets.all(12.0),
               child: Column(
@@ -310,14 +403,13 @@ class _MainDashboardScreenState extends State<MainDashboardScreen> {
                         color: amrkosBlue),
                   ),
                   const SizedBox(height: 12),
-                  // Tombol Chat WhatsApp
+                  // Tombol Chat WhatsApp (Tidak Berubah)
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton.icon(
                       onPressed: () {
                         _launchWhatsApp(context, kos.phone); 
                       },
-                      // Ikon diubah menjadi chat_bubble (standar Flutter)
                       icon: const Icon(Icons.chat_bubble, color: Colors.white), 
                       label: const Text(
                         'Chat Pemilik Kos',
@@ -339,7 +431,7 @@ class _MainDashboardScreenState extends State<MainDashboardScreen> {
     );
   }
 
-  // --- WIDGET UNTUK BOTTOM NAVIGATION BAR (3 Tombol) ---
+  // --- WIDGET UNTUK BOTTOM NAVIGATION BAR (4 Tombol) ---
   Widget _buildBottomNavigationBar() {
     return BottomNavigationBar(
       currentIndex: _selectedIndex,
@@ -352,6 +444,11 @@ class _MainDashboardScreenState extends State<MainDashboardScreen> {
           icon: Icon(Icons.home_outlined),
           activeIcon: Icon(Icons.home),
           label: 'Beranda',
+        ),
+        BottomNavigationBarItem( // <<< Koleksiku Ditambahkan
+          icon: Icon(Icons.bookmark_border),
+          activeIcon: Icon(Icons.bookmark),
+          label: 'Koleksiku',
         ),
         BottomNavigationBarItem(
           icon: Icon(Icons.chat_bubble_outline),
